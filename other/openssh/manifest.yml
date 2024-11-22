@@ -1,0 +1,21 @@
+manifestVersion: v1
+name: openssh
+slugs:
+  - openssh
+  - openssh-server
+  - ssh
+  - ssh-server
+nature: solo
+type: other
+description: OpenSSH is the premier connectivity tool for remote login with the SSH protocol. It encrypts all traffic to eliminate eavesdropping, connection hijacking, and other attacks. In addition, OpenSSH provides a large suite of secure tunneling capabilities, several authentication methods, and sophisticated configuration options.
+versions:
+	- 8.4p1-5
+portBindings:
+  - 22/tcp
+startCmd: /usr/sbin/sshd -D
+installCmdSteps:
+  - apt-get update -y
+  - mkdir -p /var/run/sshd
+  - apt-get install openssh-server=1:%version%+deb11u3 -y
+estimatedSizeBytes: 1760000
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/openssh/assets/avatar.jpg
