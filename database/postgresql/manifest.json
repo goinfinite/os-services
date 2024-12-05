@@ -58,5 +58,5 @@
 	],
 	"execUser": "postgres",
 	"estimatedSizeBytes": "367001600",
-	"avatarUrl": "https://goinfinite.net/assets/os/services/postgresql/postgresql-avatar.jpg"
+	"avatarUrl": "https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/postgresql/assets/avatar.jpg"
 }
