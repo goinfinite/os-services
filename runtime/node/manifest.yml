@@ -36,4 +36,4 @@ installCmdSteps:
   - if [ ! -f "%startupFile%" ]; then install -o nobody -g nogroup /dev/null %startupFile%; fi
   - if [ ! -s "%startupFile%" ]; then echo "require('http').createServer((req, res) => res.end()).listen(3000)" >%startupFile%; fi
 estimatedSizeBytes: 104857600
-avatarUrl: https://goinfinite.net/assets/os/services/node/node-avatar.jpg
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/node/assets/avatar.jpg
