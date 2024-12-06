@@ -18,9 +18,9 @@ installCmdSteps:
   - install_packages openlitespeed
   - for v in "74" "80" "81" "82" "83"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
   - ln -s /usr/local/lsws/lsphp82/bin/php /usr/bin/php
-  - curl -skL -o /usr/local/lsws/conf/httpd_config.conf https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/php-webserver/assets/httpd_config.conf
+  - curl -skL -o /usr/local/lsws/conf/httpd_config.conf https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/runtime/php-webserver/assets/httpd_config.conf
   - sed -i "s/goinfinite.local/%primaryHostname%/g" /usr/local/lsws/conf/httpd_config.conf
-  - curl -skL -o /app/conf/php-webserver/template https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/php-webserver/assets/primary.conf
+  - curl -skL -o /app/conf/php-webserver/template https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/runtime/php-webserver/assets/primary.conf
   - cp /app/conf/php-webserver/template /app/conf/php-webserver/primary.conf
   - sed -i "s/goinfinite.local/%primaryHostname%/g" /app/conf/php-webserver/primary.conf
   - chown -R lsadm:nogroup /app/conf/php-webserver/
@@ -34,4 +34,4 @@ stopCmdSteps:
   - sleep 1; if pgrep litespeed >/dev/null; then /usr/local/lsws/bin/lswsctrl stop; fi
   - if pgrep lsphp >/dev/null; then pkill lsphp; fi
 estimatedSizeBytes: 157286400
-avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/php-webserver/assets/avatar.jpg
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/runtime/php-webserver/assets/avatar.jpg
