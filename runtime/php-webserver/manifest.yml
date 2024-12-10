@@ -18,9 +18,9 @@ installCmdSteps:
   - install_packages openlitespeed
   - for v in "74" "80" "81" "82" "83"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
   - ln -s /usr/local/lsws/lsphp82/bin/php /usr/bin/php
-  - curl -skL -o /usr/local/lsws/conf/httpd_config.conf %installableServiceAssetsDirPath%/httpd_config.conf
+  - cp -u %installableServiceAssetsDirPath%/httpd_config.conf /usr/local/lsws/conf/httpd_config.conf
   - sed -i "s/goinfinite.local/%primaryHostname%/g" /usr/local/lsws/conf/httpd_config.conf
-  - curl -skL -o /app/conf/php-webserver/template %installableServiceAssetsDirPath%/primary.conf
+  - cp -u %installableServiceAssetsDirPath%/primary.conf /app/conf/php-webserver/template
   - cp /app/conf/php-webserver/template /app/conf/php-webserver/primary.conf
   - sed -i "s/goinfinite.local/%primaryHostname%/g" /app/conf/php-webserver/primary.conf
   - chown -R lsadm:nogroup /app/conf/php-webserver/
