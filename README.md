@@ -5,7 +5,11 @@ This repository stores the installation and uninstallation manifests for all ser
 ## Cross-Version Support
 This repository is versioned to ensure compatibility with both specific versions of Infinite OS and the `manifestVersion` property found in each manifest. The `manifestVersion` reflects the version of the individual manifest file.
 
-Versioning for this repository is managed through branches, which act as releases. This allows users to clone only the desired branch corresponding to the required version, without the need for actual release tags.
+Versioning for this repository is managed through branches, which act as releases. This allows users to clone only the desired branch corresponding to the required version, without the need for actual release tags:
+
+```bash
+git clone --single-branch --branch v0 https://github.com/goinfinite/os-services
+```
 
 Below is a mapping of repository versions and the respective Infinite OS versions and `manifestVersion` they support:
 
