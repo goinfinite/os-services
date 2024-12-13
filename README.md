@@ -55,7 +55,7 @@ Below is a table of all available system placeholders for creating manifests:
 
 | Name | Description |
 | -- | -- |
-| `randomPassword` | _automatically generated password by the system, eliminating the need for manual input._ |
-| `version` | _the version selected for installation based on the versions available in the manifest._ |
-| `primaryHostname` | _the primary hostname configured in Infinite OS._ |
-| `installableServiceAssetsDirPath` | _assets directory for the service to be installed. Useful for pre-prepared configuration files ready to be used directly during installation._ |
+| `randomPassword` | _Automatically generated password by the system, eliminating the need for manual input._ |
+| `version` | _The version selected for installation based on the versions available in the manifest._ |
+| `primaryHostname` | _The primary hostname configured in Infinite OS._ |
+| `installableServiceAssetsDirPath` | _Assets directory for the service to be installed. Useful for pre-prepared configuration files ready to be used directly during installation._ |
