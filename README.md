@@ -20,7 +20,7 @@ Below is a mapping of repository versions and the respective Infinite OS version
 | -- | -- | -- |
 | `v0` | [`v0.0.1`](https://github.com/goinfinite/os/releases/tag/v0.0.1) [`v0.0.2`](https://github.com/goinfinite/os/releases/tag/v0.0.2) [`v0.0.4`](https://github.com/goinfinite/os/releases/tag/v0.0.4) [`v0.0.6`](https://github.com/goinfinite/os/releases/tag/v0.0.6) [`v0.0.7`](https://github.com/goinfinite/os/releases/tag/v0.0.7)<br/> [`v0.0.9`](https://github.com/goinfinite/os/releases/tag/v0.0.9) [`v0.1.0`](https://github.com/goinfinite/os/releases/tag/v0.1.0) [`v0.1.2`](https://github.com/goinfinite/os/releases/tag/v0.1.2) [`v0.1.5`](https://github.com/goinfinite/os/releases/tag/v0.1.5) | `v1` |
 
-## Manifest properties
+## Manifest/Schema Properties
 These manifests have their own property structure, which is read by Infinite OS during the management of these services. The supported formats are JSON (`.json`) and YAML (`.yml`, `.yaml`).
 
 [PHP WebServer example](https://github.com/goinfinite/os-services/blob/main/runtime/php-webserver/manifest.yml).
@@ -43,7 +43,7 @@ These manifests have their own property structure, which is read by Infinite OS 
 | `estimatedSizeBytes` | string | no | _The estimated size of the service in bytes, providing clarity about the storage impact of the service._ |
 | `avatarUrl` | string | no | _The URL for the service’s image, used for illustration purposes._ |
 
-## System placeholders
+## System Placeholders
 System placeholders are predefined values used by the Infinite OS to replace placeholders in installation commands. These placeholders are denoted by `%` at the beginning and end, such as `%adminName%`.
 
 The repository will automatically substitute these placeholders with the appropriate values during the installation process. For example:
@@ -56,9 +56,9 @@ In this example, `%primaryHostname%` will be replaced with the primary hostname 
 
 Below is a table of all available system placeholders for creating manifests:
 
-| Name | Description |
-| -- | -- |
-| `randomPassword` | _Automatically generated password by the system, eliminating the need for manual input._ |
-| `version` | _The version selected for installation based on the versions available in the manifest._ |
-| `primaryHostname` | _The primary hostname configured in Infinite OS._ |
-| `installableServiceAssetsDirPath` | _Assets directory for the service to be installed. Useful for pre-prepared configuration files ready to be used directly during installation._ |
+| Name | Type |Description |
+| -- | -- | -- |
+| `randomPassword` | string | _Automatically generated password by the system, eliminating the need for manual input._ |
+| `version` | string | _The version selected for installation based on the versions available in the manifest._ |
+| `primaryHostname` | string | _The primary hostname configured in Infinite OS._ |
+| `installableServiceAssetsDirPath` | string | _Assets directory for the service to be installed. Useful for pre-prepared configuration files ready to be used directly during installation._ |
