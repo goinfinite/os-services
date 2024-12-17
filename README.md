@@ -16,7 +16,7 @@ git clone --single-branch --branch v0 https://github.com/goinfinite/os-services
 
 Below is a mapping of repository versions and the respective Infinite OS versions and `manifestVersion` they support:
 
-| Repository version | Infinite OS version | Manifest version |
+| Repository branch (version) | Infinite OS version | `manifestVersion` |
 | -- | -- | -- |
 | `v0` | [`v0.0.1`](https://github.com/goinfinite/os/releases/tag/v0.0.1) [`v0.0.2`](https://github.com/goinfinite/os/releases/tag/v0.0.2) [`v0.0.4`](https://github.com/goinfinite/os/releases/tag/v0.0.4) [`v0.0.6`](https://github.com/goinfinite/os/releases/tag/v0.0.6) [`v0.0.7`](https://github.com/goinfinite/os/releases/tag/v0.0.7)<br/> [`v0.0.9`](https://github.com/goinfinite/os/releases/tag/v0.0.9) [`v0.1.0`](https://github.com/goinfinite/os/releases/tag/v0.1.0) [`v0.1.2`](https://github.com/goinfinite/os/releases/tag/v0.1.2) [`v0.1.5`](https://github.com/goinfinite/os/releases/tag/v0.1.5) | `v1` |
 
