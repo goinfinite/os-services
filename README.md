@@ -11,6 +11,9 @@ Versioning for this repository is managed through branches, which act as release
 git clone --single-branch --branch v0 https://github.com/goinfinite/os-services
 ```
 
+> [!IMPORTANT]
+> The versioning of this repository works differently from the Infinite OS versioning. It is important to understand that the versioning here is done through branches and not releases, and its structure also differs from the Infinite OS. The Infinite OS uses major, minor, and patch versions, whereas this repository uses only a single version level, as all changes have significant impacts on the entire marketplace catalog management.
+
 Below is a mapping of repository versions and the respective Infinite OS versions and `manifestVersion` they support:
 
 | Repository version | Infinite OS version | Manifest version |
