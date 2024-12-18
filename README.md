@@ -23,7 +23,7 @@ Below is a mapping of repository versions and the respective Infinite OS version
 ## Manifest/Schema Properties
 These manifests have their own property structure, which is read by Infinite OS during the management of these services. The supported formats are JSON (`.json`) and YAML (`.yml`, `.yaml`).
 
-[PHP WebServer example](https://github.com/goinfinite/os-services/blob/main/runtime/php-webserver/manifest.yml).
+[PHP WebServer example](https://github.com/goinfinite/os-services/blob/v0/runtime/php-webserver/manifest.yml).
 
 | Property | Type | Is required? | Description |
 | -- | -- | -- | -- |

@@ -17,4 +17,4 @@ installCmdSteps:
   - mkdir -p /var/run/sshd
   - install_packages openssh-server=1:%version%+deb11u3
 estimatedSizeBytes: 1760000
-avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/other/openssh/assets/avatar.jpg
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/v0/other/openssh/assets/avatar.jpg
