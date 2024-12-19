@@ -35,4 +35,4 @@ uninstallFilePaths:
   - /run/redis/
 execUser: redis
 estimatedSizeBytes: 15728640
-avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/database/redis/assets/avatar.jpg
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/v0/database/redis/assets/avatar.jpg

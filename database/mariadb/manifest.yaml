@@ -42,4 +42,4 @@ stopCmdSteps:
   - mariadb-admin --defaults-file=/root/.my.cnf shutdown
 execUser: mysql
 estimatedSizeBytes: 524288000
-avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/main/database/mariadb/assets/avatar.jpg
+avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/v0/database/mariadb/assets/avatar.jpg
