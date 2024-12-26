@@ -22,7 +22,7 @@ Below is a mapping of repository versions and the respective Infinite OS version
 | `v1` | [`v0.1.7`](https://github.com/goinfinite/os/releases/tag/v0.1.7) | `v1` |
 
 > [!NOTE]
-> Branch versioning simplifies the control of manifests and ensures direct compatibility with Infinite OS. Branches allow accessing specific versions without additional steps, such as downloads and manual replacements, as the system uses Git for efficient operations like `git fetch`. [See how it's done](https://github.com/polillomm/os/blob/main/src/infra/services/servicesCmdRepo.go#L807).
+> Branch versioning simplifies the control of manifests and ensures direct compatibility with Infinite OS. Branches allow accessing specific versions without additional steps, such as downloads and manual replacements, as the system uses Git for efficient operations like `git fetch`. [See how it's done](https://github.com/goinfinite/os/blob/main/src/infra/services/servicesCmdRepo.go#L807).
 
 ## Manifest/Schema Properties
 These manifests have their own property structure, which is read by Infinite OS during the management of these services. The supported formats are JSON (`.json`) and YAML (`.yml`, `.yaml`).
