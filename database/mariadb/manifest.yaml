@@ -20,7 +20,7 @@ installCmdSteps:
   - if [ ! -f "/usr/bin/mariadb-admin" ]; then ln -s /usr/bin/mariadb-admin /usr/bin/mysqladmin; fi
   - if [ ! -f "/usr/bin/mariadbd-safe" ]; then ln -s /usr/bin/mariadbd-safe /usr/bin/mysqld_safe; fi
   - mariadbd-safe --no-watch --skip-grant-tables && sleep 5
-  - mariadb --protocol=socket -e "FLUSH PRIVILEGES; ALTER USER 'root'@'localhost' IDENTIFIED BY '%randomPassword%'; DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;"
+  - mariadb --protocol=socket -e "FLUSH PRIVILEGES; ALTER USER 'root'@'localhost' IDENTIFIED BY %randomPassword%; DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;"
   - echo -e "[client]\nuser=root\npassword=%randomPassword%\n" >/root/.my.cnf
   - chmod 0400 /root/.my.cnf
   - mariadb-admin --defaults-file=/root/.my.cnf shutdown
