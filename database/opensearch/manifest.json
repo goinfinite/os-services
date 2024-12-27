@@ -12,7 +12,7 @@
     "if [[ $(cat /proc/sys/vm/max_map_count) -lt 262144 ]]; then echo -n SysVmMaxMapCountParameterTooLow >&2; exit 1; fi",
     "curl -so- https://artifacts.opensearch.org/publickeys/opensearch.pgp | gpg --dearmor --batch --yes -o /usr/share/keyrings/opensearch-keyring",
     "echo \"deb [signed-by=/usr/share/keyrings/opensearch-keyring] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main\" > /etc/apt/sources.list.d/opensearch-2.x.list",
-    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=%randomPassword% install_packages opensearch=%version%",
+    "OPENSEARCH_INITIAL_ADMIN_PASSWORD='%randomPassword%' install_packages opensearch='%version%'",
     "sed -i \"s/^#network.host.*/network.host: 0.0.0.0/g\" /etc/opensearch/opensearch.yml",
     "sed -i \"s|^path.logs.*|path.logs: /app/logs/opensearch|g\" /etc/opensearch/opensearch.yml",
     "rm -f /etc/opensearch/*pem",
