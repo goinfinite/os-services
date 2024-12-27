@@ -66,3 +66,6 @@ Below is a table of all available system placeholders for creating manifests:
 | `version` | string | _The version selected for installation based on the versions available in the manifest._ |
 | `primaryHostname` | string | _The primary hostname configured in Infinite OS._ |
 | `installableServiceAssetsDirPath` | string | _Assets directory for the service to be installed. Useful for pre-prepared configuration files ready to be used directly during installation._ |
+
+> [!IMPORTANT]
+> System placeholder auto-generated values must be escaped within the manifest itself. Infinite OS won't append any character to the auto-generated values.
