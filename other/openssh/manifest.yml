@@ -17,4 +17,4 @@ installCmdSteps:
   - mkdir -p /var/run/sshd
   - install_packages openssh-server
 estimatedSizeBytes: 1760000
-avatarUrl: https://raw.githubusercontent.com/goinfinite/os-services/refs/heads/v1/other/openssh/assets/avatar.jpg
+avatarUrl: https://goinfinite.github.io/os-services/other/openssh/assets/avatar.jpg
