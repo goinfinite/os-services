@@ -1,0 +1,22 @@
+manifestVersion: v1
+name: Bun
+slugs:
+  - bun
+  - bun.sh
+nature: multi
+type: runtime
+description: Bun is an all-in-one JavaScript runtime & toolkit designed for speed, complete with a bundler, test runner, and Node.js-compatible package manager. Bun aims for 100% Node.js compatibility.
+versions:
+  - 1.2
+  - 1.1
+  - 1.0
+portBindings:
+  - 3000/http
+startupFile: /app/html/index.tsx
+startCmd: mise x bun@%version% -- bun %startupFile%
+installCmdSteps:
+  - mise install bun@%version%
+  - if [ ! -f "%startupFile%" ]; then install -o nobody -g nogroup /dev/null %startupFile%; fi
+  - if [ ! -s "%startupFile%" ]; then echo "const server = Bun.serve({fetch(request) {return new Response('Welcome to Bun!');}});" >%startupFile%; fi
+estimatedSizeBytes: 101711872
+avatarUrl: https://goinfinite.github.io/os-services/runtime/bun/assets/avatar.png
