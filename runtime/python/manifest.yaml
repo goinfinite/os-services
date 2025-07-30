@@ -1,0 +1,52 @@
+manifestVersion: v1
+name: python
+slugs:
+  - python
+  - py
+nature: multi
+type: runtime
+description: Python is a high-level, interpreted programming language known for its readability and versatility. It supports multiple programming paradigms and is widely used in web development, data analysis, artificial intelligence, scientific computing, and more.
+versions:
+  - 2.7
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+  - 3.9
+  - 3.10
+  - 3.11
+  - 3.12
+  - 3.13
+portBindings:
+  - 8000/http
+startupFile: /app/genericStartupFile.py
+startCmd: mise x python@%version% -- python %startupFile%
+installCmdSteps:
+  - source /etc/profile
+  - install_packages -y libbz2-dev libffi-dev liblzma-dev libncursesw5-dev libreadline-dev libsqlite3-dev libssl-dev zlib1g-dev
+  - mise use python@%version%
+  - if [ ! -f "%startupFile%" ]; then install -o nobody -g nogroup /dev/null %startupFile%; fi
+  - |
+    if [ ! -s "%startupFile%" ]; then echo "
+    import sys
+
+    if sys.version_info[0] == 2:
+        from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write('Hello World from Python!')
+
+    else:
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'Hello World from Python!')
+
+    HTTPServer(('', 8000), Handler).serve_forever()
+    " >%startupFile%; fi
+estimatedSizeBytes: 362735572
+avatarUrl: https://goinfinite.github.io/os-services/runtime/python/assets/avatar.png
