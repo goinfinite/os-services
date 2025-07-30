@@ -3,6 +3,12 @@
 ## v1
 
 ```
+# 2025/07/30
+
+feat: add python runtime
+```
+
+```
 # 2025/06/18
 
 feat: add Bun
