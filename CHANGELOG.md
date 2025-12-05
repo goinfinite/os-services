@@ -3,6 +3,12 @@
 ## v1
 
 ```
+# 2025/12/05
+
+chore: update node versions
+```
+
+```
 # 2025/07/30
 
 feat: add python runtime
