@@ -8,6 +8,9 @@ type: runtime
 description: Node.js runs on the V8 JavaScript engine and lets developers use JavaScript to write command line tools and for server-side scripting.
 versions:
   - lts
+  - 25
+  - 24
+  - 23
   - 22
   - 21
   - 20
