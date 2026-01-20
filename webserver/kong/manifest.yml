@@ -1,0 +1,55 @@
+manifestVersion: v1
+name: Kong
+slugs:
+  - kong
+nature: solo
+type: webserver
+description: Kong Gateway is a high-performance API gateway that provides a unified interface for accessing and managing APIs.
+versions:
+  - 3.13
+portBindings:
+  - 8000/http
+  - 8443/https
+startCmd: bash /etc/kong/kong_supervised.sh
+installCmdSteps:
+  - os services create-installable --name postgresql
+  - |
+    curl -1sLf "https://packages.konghq.com/public/gateway-313/gpg.B3A98B904066BD1F.key" |
+      gpg --dearmor |
+      tee /usr/share/keyrings/kong-gateway-313-archive-keyring.gpg >/dev/null
+    curl -1sLf "https://packages.konghq.com/public/gateway-313/config.deb.txt?distro=debian&codename=$(lsb_release -sc)" |
+      tee /etc/apt/sources.list.d/kong-gateway-313.list >/dev/null
+  - apt-get -qqy update && install_packages -qqy kong-enterprise-edition=3.13.0.0
+  - |
+    os db create \
+      --db-type postgresql \
+      --db-name kong
+    os db create-user \
+      --db-type postgresql \
+      --db-name kong \
+      --username kong_user \
+      --password '%randomPassword%' \
+      --privileges all
+  - psql -U postgres -d kong -h 127.0.0.1 <%installableServiceAssetsDirPath%/kong_user_privileges.sql
+  - cp -u %installableServiceAssetsDirPath%/kong_supervised.sh /etc/kong/kong_supervised.sh
+  - cp -u %installableServiceAssetsDirPath%/kong.conf /etc/kong/kong.conf
+  - sed -i "s|kong_password|%randomPassword%|g" /etc/kong/kong.conf
+  - kong migrations bootstrap
+uninstallCmdSteps:
+  - kong stop
+  - apt-get purge -qqy kong*
+  - psql -U postgres -d kong -h 127.0.0.1 -c "DROP OWNED BY kong_user;"
+  - |
+    os db delete-user \
+      --db-type postgresql \
+      --db-name kong \
+      --db-username kong_user
+    os db delete \
+      --db-type postgresql \
+      --db-name kong
+uninstallFilePaths:
+  - /etc/kong
+  - /usr/local/kong
+  - /etc/apt/sources.list.d/kong-gateway-313.list
+estimatedSizeBytes: 214958080
+avatarUrl: https://goinfinite.github.io/os-services/runtime/kong/assets/avatar.png
