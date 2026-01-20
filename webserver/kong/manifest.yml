@@ -53,4 +53,4 @@ uninstallFilePaths:
   - /etc/apt/sources.list.d/kong-gateway-313.list
   - /usr/share/keyrings/kong-gateway-313-archive-keyring.gpg
 estimatedSizeBytes: 214958080
-avatarUrl: https://goinfinite.github.io/os-services/runtime/kong/assets/avatar.png
+avatarUrl: https://goinfinite.github.io/os-services/webserver/kong/assets/avatar.png
