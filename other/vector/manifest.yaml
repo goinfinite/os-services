@@ -1,0 +1,24 @@
+manifestVersion: v1
+name: Vector
+slugs:
+  - vector
+nature: solo
+type: other
+description: Vector is a high-performance observability data pipeline.
+versions:
+  - 0.52.0
+portBindings:
+  - 8686/http
+startCmd: vector --config /etc/vector/vector.yaml
+installCmdSteps: 
+  - curl -sSfL https://setup.vector.dev | bash -s -- -y
+  - install_packages -qqy vector
+  - cp -u %installableServiceAssetsDirPath%/vector.txt /etc/vector/vector.yaml
+uninstallCmdSteps: 
+  - apt-get purge -qqy vector
+uninstallFilePaths: 
+  - /etc/apt/sources.list.d/vector.list
+  - /usr/share/keyrings/datadog-archive-keyring.gpg
+execUser: root
+estimatedSizeBytes: 142108693
+avatarUrl: "https://goinfinite.github.io/os-services/other/vector/assets/avatar.png"
