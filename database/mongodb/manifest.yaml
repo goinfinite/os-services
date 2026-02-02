@@ -20,23 +20,13 @@ installCmdSteps:
   - install_packages -qqy mongodb-org=7.0*
   - cp -u %installableServiceAssetsDirPath%/mongod.conf /etc/mongod.conf
 uninstallCmdSteps:
-  - apt-get purge -y mongodb-org=7.0*
+  - apt-get purge -y mongodb*
 uninstallFilePaths:
   - /usr/share/keyrings/mongodb-server-7.0.gpg
   - /etc/apt/sources.list.d/mongodb-org-7.0.list
   - /var/lib/mongodb/
   - /var/log/mongodb/
   - /etc/mongod.conf
-  - /usr/bin/mongod
-  - /usr/bin/mongodump
-  - /usr/bin/mongoexport
-  - /usr/bin/mongofiles
-  - /usr/bin/mongoimport
-  - /usr/bin/mongos
-  - /usr/bin/mongorestore
-  - /usr/bin/mongosh
-  - /usr/bin/mongostat
-  - /usr/bin/mongotop
 execUser: mongodb
 estimatedSizeBytes: 620025594
 avatarUrl: https://goinfinite.github.io/os-services/database/mongodb/assets/avatar.png
