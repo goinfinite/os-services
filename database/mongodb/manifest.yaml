@@ -18,6 +18,7 @@ installCmdSteps:
     echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" | 
       tee /etc/apt/sources.list.d/mongodb-org-7.0.list
   - install_packages -qqy mongodb-org=7.0*
+  - cp -u %installableServiceAssetsDirPath%/mongod.conf /etc/mongod.conf
 uninstallCmdSteps:
   - apt-get purge -y mongodb-org=7.0*
 uninstallFilePaths:
