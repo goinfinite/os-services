@@ -1,0 +1,32 @@
+manifestVersion: v1
+name: mongodb
+slugs:
+  - mongo
+  - mongodb
+nature: solo
+type: database
+description: MongoDB is a document-oriented NoSQL database used for high volume data storage.
+versions:
+  - 7.0
+portBindings:
+  - 27017/tcp
+startCmd: mongod --config /etc/mongod.conf
+installCmdSteps:
+  - |
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc |
+      gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+    echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" | 
+      tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+  - install_packages -qqy mongodb-org=7.0*
+  - cp -u %installableServiceAssetsDirPath%/mongod.conf /etc/mongod.conf
+uninstallCmdSteps:
+  - apt-get purge -y mongodb*
+uninstallFilePaths:
+  - /usr/share/keyrings/mongodb-server-7.0.gpg
+  - /etc/apt/sources.list.d/mongodb-org-7.0.list
+  - /var/lib/mongodb/
+  - /var/log/mongodb/
+  - /etc/mongod.conf
+execUser: mongodb
+estimatedSizeBytes: 620025594
+avatarUrl: https://goinfinite.github.io/os-services/database/mongodb/assets/avatar.png
