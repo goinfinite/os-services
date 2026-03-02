@@ -16,7 +16,7 @@ startCmd: /usr/local/lsws/bin/litespeed -d
 installCmdSteps:
   - curl -skL https://repo.litespeed.sh | bash
   - install_packages openlitespeed
-  - for v in "74" "80" "81" "82" "83"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
+  - for v in "74" "80" "81" "82" "83" "84" "85"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
   - ln -s /usr/local/lsws/lsphp82/bin/php /usr/bin/php
   - cp -u %installableServiceAssetsDirPath%/httpd_config.conf /usr/local/lsws/conf/httpd_config.conf
   - sed -i "s/goinfinite.local/%primaryHostname%/g" /usr/local/lsws/conf/httpd_config.conf
