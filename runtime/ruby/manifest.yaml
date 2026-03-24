@@ -1,0 +1,46 @@
+manifestVersion: v1
+name: ruby
+slugs:
+  - ruby
+  - rb
+nature: multi
+type: runtime
+description: Ruby is a dynamic, open source programming language with a focus on simplicity and productivity. It has an elegant syntax that is natural to read and easy to write. Ruby is widely used for web development (notably with Ruby on Rails), scripting, DevOps tools, and automation.
+versions:
+  - 4.0
+  - 3.4
+  - 3.3
+  - 3.2
+  - 3.1
+  - 3.0
+  - 2.7
+  - 2.6
+  - 2.5
+  - 2.4
+  - 2.3
+  - 2.2
+  - 2.1
+  - 2.0
+  - 1.8
+portBindings:
+  - 3000/http
+startupFile: /app/genericStartupFile.rb
+startCmd: mise x ruby@%version% -- ruby %startupFile%
+installCmdSteps:
+  - install_packages -y build-essential libssl-dev libreadline-dev zlib1g-dev libffi-dev libyaml-dev
+  - mise install ruby@%version%
+  - mise x ruby@%version% -- gem install webrick
+  - if [ ! -f "%startupFile%" ]; then install -o nobody -g nogroup /dev/null %startupFile%; fi
+  - |
+    if [ ! -s "%startupFile%" ]; then echo "
+    require 'webrick'
+    server = WEBrick::HTTPServer.new(:Port => 3000, :BindAddress => '0.0.0.0')
+    server.mount_proc '/' do |req, res|
+      res.content_type = 'text/plain'
+      res.body = 'Hello World from Ruby!'
+    end
+    trap 'INT' do server.shutdown end
+    server.start
+    " >%startupFile%; fi
+estimatedSizeBytes: 157286400
+avatarUrl: https://goinfinite.github.io/os-services/runtime/ruby/assets/avatar.png

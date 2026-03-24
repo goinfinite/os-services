@@ -3,6 +3,19 @@
 ## v1
 
 ```
+# 2026/03/23
+
+feat: add Ruby runtime manifest (Issue #19)
+  - runtime/ruby/manifest.yaml with tested versions: 1.8, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 4.0
+  - runtime/ruby/assets/avatar.png
+  - Uses mise for version management
+  - WEBrick-based default server on port 3000
+  - Includes libffi-dev and libyaml-dev for compilation
+  - Installs webrick gem (not included in Ruby 3.0+)
+  - Uses 'mise x ruby@%version% -- ruby' in startCmd (standard pattern)
+```
+
+```
 # 2025/12/05
 
 chore: update node versions
