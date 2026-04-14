@@ -38,4 +38,4 @@ uninstallFilePaths:
   - /usr/local/bin/uvx
 execUser: root
 estimatedSizeBytes: 1387020733
-avatarUrl: https://goinfinite.github.io/os-services/application/hermes-agent/assets/avatar.png
+avatarUrl: https://goinfinite.github.io/os-services/other/hermes-agent/assets/avatar.png
