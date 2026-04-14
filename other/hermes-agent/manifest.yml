@@ -1,0 +1,41 @@
+manifestVersion: v1
+name: hermes-agent
+slugs:
+  - hermes
+  - hermes-agent
+nature: solo
+type: other
+description: Hermes is a self-improving AI agent by Nous Research. It creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are. Supports Telegram, Discord, Slack, WhatsApp, Signal, and more. Use any LLM via OpenRouter, OpenAI, Anthropic, Nous Portal, and others.
+versions:
+  - v2026.4.13
+portBindings:
+startCmd: /root/.local/bin/hermes gateway run
+installCmdSteps:
+  - install_packages -qqy ripgrep
+  - curl -LsSf https://astral.sh/uv/install.sh | bash
+  - ln -sf /root/.local/bin/uv /usr/local/bin/uv
+  - ln -sf /root/.local/bin/uvx /usr/local/bin/uvx
+  - mise use -g node@22 && source /etc/profile # https://hermes-agent.nousresearch.com/docs/getting-started/installation#prerequisites
+  - git clone --branch %version% --depth 1 --recurse-submodules https://github.com/NousResearch/hermes-agent.git /app/hermes-agent
+  - |
+    cd /app/hermes-agent
+    uv venv venv --python 3.11
+    export VIRTUAL_ENV="$(pwd)/venv"
+    uv pip install -e ".[all]"
+    uv pip install -e "./tinker-atropos"
+    npm install
+  - mkdir -p /root/.hermes/{cron,sessions,logs,memories,skills,pairing,hooks,image_cache,audio_cache,whatsapp/session}
+  - cp /app/hermes-agent/cli-config.yaml.example /root/.hermes/config.yaml
+  - cp /app/hermes-agent/.env.example /root/.hermes/.env
+  - ln -sf /app/hermes-agent/venv/bin/hermes /usr/local/bin/hermes
+  - ln -sf /app/hermes-agent/venv/bin/hermes /root/.local/bin/hermes
+  - hermes skills list
+uninstallFilePaths:
+  - /app/hermes-agent
+  - /root/.hermes
+  - /usr/local/bin/hermes
+  - /usr/local/bin/uv
+  - /usr/local/bin/uvx
+execUser: root
+estimatedSizeBytes: 1387020733
+avatarUrl: https://goinfinite.github.io/os-services/application/hermes-agent/assets/avatar.png
