@@ -3,6 +3,10 @@
 ## v1
 
 ```
+# 2026/04/14
+
+feat: add hermes-agent
+
 # 2026/03/23
 
 feat: add Ruby runtime manifest (Issue #19)
