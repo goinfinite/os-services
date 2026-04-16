@@ -3,6 +3,10 @@
 ## v1
 
 ```
+# 2026/04/16
+
+feat: add port binding 8644/http for hermes-agent (PR #65)
+
 # 2026/04/14
 
 feat: add hermes-agent
