@@ -9,6 +9,7 @@ description: Hermes is a self-improving AI agent by Nous Research. It creates sk
 versions:
   - v2026.4.13
 portBindings:
+  - 8644/http
 startCmd: /root/.local/bin/hermes gateway run
 installCmdSteps:
   - install_packages -qqy ripgrep
