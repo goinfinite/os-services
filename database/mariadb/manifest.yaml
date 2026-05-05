@@ -15,6 +15,7 @@ portBindings:
 startCmd: /usr/bin/mariadbd-safe
 installCmdSteps:
   - curl -skL https://r.mariadb.com/downloads/mariadb_repo_setup | bash -s -- --mariadb-server-version=%version%
+  - sed -i '/# MariaDB MaxScale/,/^$/d' /etc/apt/sources.list.d/mariadb.list
   - install_packages mariadb-server mariadb-client
   - if [ ! -f "/usr/bin/mysql" ]; then ln -s /usr/bin/mariadb /usr/bin/mysql; fi
   - if [ ! -f "/usr/bin/mariadb-admin" ]; then ln -s /usr/bin/mariadb-admin /usr/bin/mysqladmin; fi
