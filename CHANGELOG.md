@@ -3,6 +3,10 @@
 ## v1
 
 ```
+# 2026/07/03
+
+fix: handle both mariadb.list and mariadb.sources for MaxScale removal (Issue #71)
+
 # 2026/04/16
 
 feat: add port binding 8644/http for hermes-agent (PR #65)
