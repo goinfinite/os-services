@@ -17,7 +17,7 @@ portBindings:
 startCmd: /usr/bin/mariadbd-safe
 installCmdSteps:
   - curl -skL https://r.mariadb.com/downloads/mariadb_repo_setup | bash -s -- --mariadb-server-version=%version%
-  - sed -i '/# MariaDB MaxScale/,/^$/d' /etc/apt/sources.list.d/mariadb.list
+  - for f in /etc/apt/sources.list.d/mariadb.list /etc/apt/sources.list.d/mariadb.sources; do [ -f "$f" ] && sed -i '/# MariaDB MaxScale/,/^$/d' "$f"; done
   - install_packages mariadb-server mariadb-client
   - if [ ! -f "/usr/bin/mysql" ]; then ln -s /usr/bin/mariadb /usr/bin/mysql; fi
   - if [ ! -f "/usr/bin/mariadb-admin" ]; then ln -s /usr/bin/mariadb-admin /usr/bin/mysqladmin; fi
@@ -41,6 +41,7 @@ uninstallFilePaths:
   - /var/lib/mysql
   - /var/log/mysql
   - /etc/apt/sources.list.d/mariadb.list
+  - /etc/apt/sources.list.d/mariadb.sources
   - /root/.my.cnf
 stopCmdSteps:
   - mariadb-admin --defaults-file=/root/.my.cnf shutdown
