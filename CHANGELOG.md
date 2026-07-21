@@ -3,6 +3,10 @@
 ## v1
 
 ```
+# 2026/07/21
+
+fix: add PHP session garbage collection params to primary.conf (Issue #329)
+
 # 2026/07/03
 
 fix: handle both mariadb.list and mariadb.sources for MaxScale removal (Issue #71)
