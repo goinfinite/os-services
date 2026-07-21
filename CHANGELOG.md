@@ -5,7 +5,7 @@
 ```
 # 2026/07/21
 
-fix: add PHP session garbage collection params to primary.conf (Issue #329)
+fix: add PHP session garbage collection params to primary.conf (Issue #73)
 
 # 2026/07/03
 
