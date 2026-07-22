@@ -27,7 +27,9 @@ installCmdSteps:
   - chown -R lsadm:nogroup /app/conf/php-webserver/
   - chown -R nobody:nogroup /app/logs/php-webserver
   - /infinite/os cron create -s "*/2 * * * *" -d "AutoReloadPhpWebServerAfterHtaccessChange" -c "if ! find /app/html -maxdepth 7 -type f -name '.htaccess' -newer /usr/local/lsws/cgid -exec false {} +; then /infinite/os services update -n php-webserver -s restart; fi"
+  - /infinite/os cron create -s "0 0 * * *" -d "DailyLswsSwapCleanup" -c "find /tmp/lshttpd/swap/ -type f -mmin +1440 -delete"
 uninstallCmdSteps:
+  - /infinite/os cron delete -d "DailyLswsSwapCleanup"
   - /infinite/os cron delete -d "AutoReloadPhpWebServerAfterHtaccessChange"
   - if [[ -f "/usr/bin/php" ]]; then unlink /usr/bin/php; fi
   - apt-get purge -y openlitespeed lsphp*
