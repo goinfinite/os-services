@@ -1,0 +1,374 @@
+name: "Services CI"
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      all_items: ${{ steps.discover.outputs.all_items }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Discover and classify services
+        id: discover
+        run: |
+          pip install pyyaml -q
+          python3 << 'PYEOF'
+          import json, os, re, yaml
+
+          CATALOG_DIRS = ["database", "runtime", "webserver", "other"]
+
+          def find_manifest(service_dir):
+              for filename in ("manifest.json", "manifest.yml", "manifest.yaml"):
+                  path = os.path.join(service_dir, filename)
+                  if os.path.isfile(path):
+                      return path
+              return None
+
+          def parse_manifest(path):
+              with open(path) as f:
+                  if path.endswith(".json"):
+                      return json.load(f)
+                  return yaml.safe_load(f)
+
+          repo_root = os.environ.get("GITHUB_WORKSPACE", ".")
+          all_items = []
+          test_items = []
+
+          for cat_dir in CATALOG_DIRS:
+              cat_path = os.path.join(repo_root, cat_dir)
+              if not os.path.isdir(cat_path):
+                  continue
+              for entry in sorted(os.listdir(cat_path)):
+                  entry_path = os.path.join(cat_path, entry)
+                  if not os.path.isdir(entry_path):
+                      continue
+
+                  manifest_path = find_manifest(entry_path)
+                  if manifest_path is None:
+                      all_items.append({
+                          "name": entry, "type": cat_dir, "nature": "",
+                          "version": "", "portProtocol": "",
+                          "status": "skip", "error": "No manifest found"
+                      })
+                      continue
+
+                  try:
+                      manifest = parse_manifest(manifest_path)
+                  except Exception as parse_err:
+                      all_items.append({
+                          "name": entry, "type": cat_dir, "nature": "",
+                          "version": "", "portProtocol": "",
+                          "status": "skip",
+                          "error": f"Manifest parse error: {parse_err}"
+                      })
+                      continue
+
+                  name = manifest.get("name", "")
+                  if not isinstance(name, str) or not re.match(r'^[a-zA-Z0-9_-]+$', name):
+                      all_items.append({
+                          "name": str(name) if name else entry,
+                          "type": cat_dir, "nature": "",
+                          "version": "", "portProtocol": "",
+                          "status": "skip", "error": "Invalid name"
+                      })
+                      continue
+
+                  versions = manifest.get("versions", [])
+                  if not versions:
+                      all_items.append({
+                          "name": name, "type": cat_dir, "nature": "",
+                          "version": "", "portProtocol": "",
+                          "status": "skip", "error": "No versions"
+                      })
+                      continue
+
+                  port_bindings = manifest.get("portBindings", [])
+                  if not port_bindings:
+                      all_items.append({
+                          "name": name, "type": cat_dir, "nature": "",
+                          "version": "", "portProtocol": "",
+                          "status": "skip", "error": "No portBindings"
+                      })
+                      continue
+
+                  nature = manifest.get("nature", "")
+                  svc_type = manifest.get("type", cat_dir)
+                  version = str(versions[0])
+                  port_protocol = str(port_bindings[0])
+
+                  install_steps = manifest.get("installCmdSteps", [])
+                  if isinstance(install_steps, list):
+                      has_install = any(
+                          isinstance(s, str) and s.strip()
+                          for s in install_steps
+                      )
+                  else:
+                      has_install = bool(install_steps)
+
+                  if not has_install:
+                      all_items.append({
+                          "name": name, "type": svc_type,
+                          "nature": nature,
+                          "version": "", "portProtocol": "",
+                          "status": "skip",
+                          "error": "No installCmdSteps"
+                      })
+                      continue
+
+                  item = {
+                      "name": name,
+                      "version": version,
+                      "portProtocol": port_protocol,
+                      "nature": nature,
+                      "type": svc_type,
+                  }
+                  test_items.append(item)
+                  all_items.append({
+                      "name": name, "type": svc_type,
+                      "nature": nature,
+                      "version": version,
+                      "portProtocol": port_protocol,
+                      "status": "test", "error": None
+                  })
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("matrix=" + json.dumps(test_items) + "\n")
+              f.write("all_items=" + json.dumps(all_items) + "\n")
+
+          summary = [f"Discovered {len(all_items)} services, {len(test_items)} testable"]
+          for item in all_items:
+              if item["status"] == "skip":
+                  summary.append(f"  SKIP {item['name']}: {item.get('error', '')}")
+          for item in test_items:
+              summary.append(
+                  f"  TEST {item['name']} v{item['version']} ({item['type']})"
+              )
+          print("\n".join(summary))
+          PYEOF
+
+  test:
+    needs: [discover]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{ fromJson(needs.discover.outputs.matrix) }}
+      fail-fast: false
+      max-parallel: 4
+    steps:
+      - name: Get latest OS tag
+        id: os-version
+        run: |
+          latest_tag=$(curl -s "https://registry.hub.docker.com/v2/repositories/goinfinite/os/tags?page_size=5" | jq -r '.results | sort_by(.last_updated) | reverse[] | .name' | grep -v latest | head -1)
+          if [ -z "${latest_tag}" ]; then
+            echo "::error::No usable OS image tag found from Docker Hub"
+            exit 1
+          fi
+          echo "OS image tag: ${latest_tag}"
+          echo "os_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
+      - name: Pull OS image
+        env:
+          OS_TAG: ${{ steps.os-version.outputs.os_tag }}
+        run: docker pull docker.io/goinfinite/os:${OS_TAG}
+      - name: Start container
+        id: start
+        env:
+          ITEM_NAME: ${{ matrix.item.name }}
+          OS_TAG: ${{ steps.os-version.outputs.os_tag }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          container_name="${ITEM_NAME}-ci-${RUN_ID}"
+          echo "container_name=${container_name}" >> "$GITHUB_OUTPUT"
+          docker run -d --rm \
+            --name "${container_name}" \
+            --cpus=2 \
+            --memory=4G \
+            --env "PRIMARY_VHOST=goinfinite.local" \
+            --env "LOG_LEVEL=debug" \
+            docker.io/goinfinite/os:${OS_TAG}
+      - name: Wait for container readiness
+        env:
+          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+        run: |
+          echo "Waiting for container ${CONTAINER_NAME}..."
+          for attempt in $(seq 1 12); do
+            if docker exec "${CONTAINER_NAME}" os version >/dev/null 2>&1; then
+              echo "Container ready (attempt ${attempt})"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Container did not become ready within 60s"
+          exit 1
+      - name: Install service
+        id: install
+        env:
+          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+          ITEM_NAME: ${{ matrix.item.name }}
+          ITEM_VERSION: ${{ matrix.item.version }}
+          ITEM_PORT_PROTOCOL: ${{ matrix.item.portProtocol }}
+        run: |
+          result_file="result-${ITEM_NAME}-${ITEM_VERSION}.json"
+          tmp_out=$(mktemp)
+          set +e
+          docker exec "${CONTAINER_NAME}" \
+            os services create-installable \
+            -n "${ITEM_NAME}" \
+            -v "${ITEM_VERSION}" \
+            -p "${ITEM_PORT_PROTOCOL}" \
+            > "${tmp_out}" 2>&1
+          exit_code=$?
+          set -e
+          export CI_NAME="${ITEM_NAME}"
+          export CI_VERSION="${ITEM_VERSION}"
+          export CI_PORT="${ITEM_PORT_PROTOCOL}"
+          export CI_EXIT="${exit_code}"
+          export CI_OUT="${tmp_out}"
+          export CI_RESULT="${result_file}"
+          python3 << 'PYEOF'
+          import json, os
+          with open(os.environ['CI_OUT']) as f:
+              output = f.read()
+          with open(os.environ['CI_RESULT'], 'w') as f:
+              json.dump({
+                  'name': os.environ['CI_NAME'],
+                  'version': os.environ['CI_VERSION'],
+                  'portProtocol': os.environ['CI_PORT'],
+                  'exitCode': int(os.environ['CI_EXIT']),
+                  'output': output
+              }, f)
+          PYEOF
+          rm -f "${tmp_out}"
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          echo "Exit code: ${exit_code}"
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.item.name }}
+          path: result-${{ matrix.item.name }}-${{ matrix.item.version }}.json
+      - name: Cleanup container
+        if: always()
+        env:
+          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+        run: |
+          docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+  report:
+    needs: [discover, test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download result artifacts
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+          merge-multiple: true
+      - name: Generate job summary
+        if: always()
+        env:
+          ALL_ITEMS: ${{ needs.discover.outputs.all_items }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, glob
+
+          all_items_raw = os.environ.get("ALL_ITEMS", "[]")
+          all_items = json.loads(all_items_raw)
+
+          test_results = {}
+          for result_path in glob.glob("results/result-*.json"):
+              with open(result_path) as f:
+                  data = json.load(f)
+              test_results[data["name"]] = data
+
+          lines = []
+          lines.append("# Services CI Results")
+          lines.append("")
+          lines.append(
+              "| Service | Type | Nature | Version | Port | Status | Details |"
+          )
+          lines.append("|---|---|---|---|---|---|---|")
+
+          failures = 0
+          for item in all_items:
+              name = item["name"]
+              svc_type = item.get("type", "")
+              nature = item.get("nature", "")
+              status = item["status"]
+              version = item.get("version", "")
+              port = item.get("portProtocol", "")
+
+              if status == "test" and name in test_results:
+                  tr = test_results[name]
+                  exit_code = tr.get("exitCode", -1)
+                  version = tr.get("version", version)
+                  port = tr.get("portProtocol", port)
+                  if exit_code == 0:
+                      test_status = "PASS"
+                      detail = ""
+                  else:
+                      test_status = "FAIL"
+                      failures += 1
+                      output = tr.get("output", "")
+                      last_line = (
+                          output.strip().split("\n")[-1]
+                          if output.strip()
+                          else ""
+                      )
+                      detail = (last_line or f"exit code {exit_code}")[:120]
+              elif status == "test":
+                  test_status = "SKIP"
+                  detail = "No result artifact found"
+              else:
+                  test_status = "SKIP"
+                  detail = item.get("error", "")
+
+              lines.append(
+                  f"| {name} | {svc_type} | {nature} | {version}"
+                  f" | {port} | {test_status} | {detail} |"
+              )
+
+          if not all_items:
+              lines.append(
+                  "| _No services discovered_"
+                  " | - | - | - | - | - | - |"
+              )
+
+          summary_text = "\n".join(lines)
+
+          step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary_path:
+              with open(step_summary_path, "a") as f:
+                  f.write(summary_text + "\n")
+
+          print(summary_text)
+          print()
+
+          passed = sum(
+              1 for i in all_items
+              if i["status"] == "test"
+              and test_results.get(i["name"], {}).get("exitCode") == 0
+          )
+          failed_count = failures
+          skipped = sum(1 for i in all_items if i["status"] == "skip")
+          print(f"Summary: {passed} passed, {failed_count} failed, {skipped} skipped")
+
+          if failures > 0:
+              print(f"::error::Services CI failed for {failures} service(s)")
+              exit(1)
+
+          if not all_items:
+              print("No services were discovered. Check repository structure.")
+          PYEOF
