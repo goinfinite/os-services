@@ -38,5 +38,6 @@ installCmdSteps:
   - mise install node@%version%
   - if [ ! -f "%startupFile%" ]; then install -o nobody -g nogroup /dev/null %startupFile%; fi
   - if [ ! -s "%startupFile%" ]; then echo "require('http').createServer((req, res) => res.end()).listen(3000)" >%startupFile%; fi
+execUser: nobody
 estimatedSizeBytes: 104857600
 avatarUrl: https://goinfinite.github.io/os-services/runtime/node/assets/avatar.jpg
