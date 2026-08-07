@@ -3,6 +3,11 @@
 ## v2
 
 ```
+# 2026/08/07
+
+feat: add legacy PHP WebServer profile
+fix: align PHP WebServer defaults with installed versions
+
 # 2026/08/04
 
 feat: run Node services as nobody (Issue #293)

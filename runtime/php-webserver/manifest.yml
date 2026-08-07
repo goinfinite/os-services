@@ -9,6 +9,7 @@ type: runtime
 description: PHP is a general-purpose scripting language geared towards web development. OpenLiteSpeed (PHP WebServer) is a high-performance, lightweight, open source HTTP (and PHP) server developed and copyrighted by LiteSpeed Technologies.
 versions:
   - latest
+  - legacy
 portBindings:
   - 8080/http
   - 8443/https
@@ -16,7 +17,7 @@ startCmd: /usr/local/lsws/bin/litespeed -d
 installCmdSteps:
   - curl -skL https://repo.litespeed.sh | bash
   - install_packages openlitespeed
-  - for v in "74" "80" "81" "82" "83" "84"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
+  - for v in "81" "82" "83" "84"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
   - install_packages lsphp85 lsphp85-common lsphp85-curl lsphp85-intl lsphp85-mysql
   - ln -s /usr/local/lsws/lsphp82/bin/php /usr/bin/php
   - cp -u %installableServiceAssetsDirPath%/httpd_config.conf /usr/local/lsws/conf/httpd_config.conf
