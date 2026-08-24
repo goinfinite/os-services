@@ -3,6 +3,10 @@
 ## v2
 
 ```
+# 2026/08/24
+
+chore: raise php-webserver estimated size to 1 GiB
+
 # 2026/08/07
 
 feat: add legacy PHP WebServer profile
