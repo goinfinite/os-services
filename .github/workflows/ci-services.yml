@@ -106,7 +106,6 @@ jobs:
 
                   nature = manifest.get("nature", "")
                   svc_type = manifest.get("type", cat_dir)
-                  version = str(versions[0])
                   port_protocol = str(port_bindings[0])
 
                   install_steps = manifest.get("installCmdSteps", [])
@@ -140,21 +139,23 @@ jobs:
 
                   seen_names.add(name)
 
-                  item = {
-                      "name": name,
-                      "version": version,
-                      "portProtocol": port_protocol,
-                      "nature": nature,
-                      "type": svc_type,
-                  }
-                  test_items.append(item)
-                  all_items.append({
-                      "name": name, "type": svc_type,
-                      "nature": nature,
-                      "version": version,
-                      "portProtocol": port_protocol,
-                      "status": "test", "error": None
-                  })
+                  for version_value in versions:
+                      version = str(version_value)
+                      item = {
+                          "name": name,
+                          "version": version,
+                          "portProtocol": port_protocol,
+                          "nature": nature,
+                          "type": svc_type,
+                      }
+                      test_items.append(item)
+                      all_items.append({
+                          "name": name, "type": svc_type,
+                          "nature": nature,
+                          "version": version,
+                          "portProtocol": port_protocol,
+                          "status": "test", "error": None
+                      })
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write("matrix=" + json.dumps(test_items) + "\n")
@@ -270,7 +271,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: result-${{ matrix.item.name }}
+          name: result-${{ matrix.item.name }}-${{ matrix.item.version }}
           path: result-${{ matrix.item.name }}-${{ matrix.item.version }}.json
       - name: Cleanup container
         if: always()
@@ -305,7 +306,7 @@ jobs:
           for result_path in glob.glob("results/result-*.json"):
               with open(result_path) as f:
                   data = json.load(f)
-              test_results[data["name"]] = data
+              test_results[(data["name"], data["version"])] = data
 
           lines = []
           lines.append("# Services CI Results")
@@ -324,8 +325,9 @@ jobs:
               version = item.get("version", "")
               port = item.get("portProtocol", "")
 
-              if status == "test" and name in test_results:
-                  tr = test_results[name]
+              result_key = (name, version)
+              if status == "test" and result_key in test_results:
+                  tr = test_results[result_key]
                   exit_code = tr.get("exitCode", -1)
                   version = tr.get("version", version)
                   port = tr.get("portProtocol", port)
@@ -374,7 +376,9 @@ jobs:
           passed = sum(
               1 for i in all_items
               if i["status"] == "test"
-              and test_results.get(i["name"], {}).get("exitCode") == 0
+              and test_results.get(
+                  (i["name"], i.get("version", "")), {}
+              ).get("exitCode") == 0
           )
           failed_count = failures
           skipped = sum(1 for i in all_items if i["status"] == "skip")
