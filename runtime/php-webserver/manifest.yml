@@ -14,17 +14,9 @@ portBindings:
   - 8080/http
   - 8443/https
 startCmd: /usr/local/lsws/bin/litespeed -d
+installTimeoutSecs: 1200
 installCmdSteps:
-  - curl -skL https://repo.litespeed.sh | bash
-  - install_packages openlitespeed
-  - for v in "81" "82" "83" "84"; do install_packages lsphp${v} lsphp${v}-common lsphp${v}-curl lsphp${v}-intl lsphp${v}-mysql lsphp${v}-opcache; done
-  - install_packages lsphp85 lsphp85-common lsphp85-curl lsphp85-intl lsphp85-mysql
-  - ln -s /usr/local/lsws/lsphp82/bin/php /usr/bin/php
-  - cp -u %installableServiceAssetsDirPath%/httpd_config.conf /usr/local/lsws/conf/httpd_config.conf
-  - sed -i "s/goinfinite.local/%primaryHostname%/g" /usr/local/lsws/conf/httpd_config.conf
-  - cp -u %installableServiceAssetsDirPath%/primary.conf /app/conf/php-webserver/template
-  - cp /app/conf/php-webserver/template /app/conf/php-webserver/primary.conf
-  - sed -i "s/goinfinite.local/%primaryHostname%/g" /app/conf/php-webserver/primary.conf
+  - bash %installableServiceAssetsDirPath%/install.sh "%version%" "%primaryHostname%" "%installableServiceAssetsDirPath%"
   - chown -R lsadm:nogroup /app/conf/php-webserver/
   - chown -R nobody:nogroup /app/logs/php-webserver
   - /infinite/os cron create -s "*/2 * * * *" -d "AutoReloadPhpWebServerAfterHtaccessChange" -c "if ! find /app/html -maxdepth 7 -type f -name '.htaccess' -newer /usr/local/lsws/cgid -exec false {} +; then /infinite/os services update -n php-webserver -s restart; fi"
@@ -32,8 +24,12 @@ installCmdSteps:
 uninstallCmdSteps:
   - /infinite/os cron delete -d "DailyLswsSwapCleanup"
   - /infinite/os cron delete -d "AutoReloadPhpWebServerAfterHtaccessChange"
-  - if [[ -f "/usr/bin/php" ]]; then unlink /usr/bin/php; fi
-  - apt-get purge -y openlitespeed lsphp*
+  - if [[ -L "/usr/bin/php" ]]; then phpTarget="$(readlink -f "/usr/bin/php" || true)"; case "$phpTarget" in /usr/local/lsws/lsphp74/*|/usr/local/lsws/lsphp82/*) unlink "/usr/bin/php" ;; esac; fi
+  - packageList="$(dpkg-query -W -f='${binary:Package}\n' openlitespeed 'lsphp*' 2>/dev/null || true)"; if [[ -n "$packageList" ]]; then mapfile -t packageNames <<< "$packageList"; apt-get purge -y "${packageNames[@]}"; fi
+uninstallFilePaths:
+  - /etc/apt/sources.list.d/infinite-apt.list
+  - /usr/share/keyrings/infinite-apt.gpg
+  - /app/conf/php-webserver/
 stopCmdSteps:
   - sleep 1; if pgrep litespeed >/dev/null; then /usr/local/lsws/bin/lswsctrl stop; fi
   - if pgrep lsphp >/dev/null; then pkill lsphp; fi
