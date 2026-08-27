@@ -4,7 +4,7 @@
 # @output       No standard output.
 # @requires     bash v4+, apt-get, awk, curl, gpg, sed, tr
 # @version      0.1.0
-# @updated      2026-08-24
+# @updated      2026-08-27
 
 set -euo pipefail
 
@@ -13,7 +13,7 @@ installLiteSpeedRepository() {
 }
 
 installInfiniteAptRepositoryKey() {
-  configuredFingerprint="<configured-full-fingerprint>"
+  configuredFingerprint="A2CFAC75CC057C4539EB235C4F0EF2A3C87015E4"
   expectedFingerprint="$(printf '%s' "$configuredFingerprint" \
     | tr '[:lower:]' '[:upper:]')"
   case "$expectedFingerprint" in
