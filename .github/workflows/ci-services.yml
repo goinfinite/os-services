@@ -11,8 +11,8 @@ jobs:
   discover:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-      all_items: ${{ steps.discover.outputs.all_items }}
+      MATRIX: ${{ steps.discover.outputs.MATRIX }}
+      ALL_ITEMS: ${{ steps.discover.outputs.ALL_ITEMS }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,250 +23,291 @@ jobs:
       - name: Discover and classify services
         id: discover
         run: |
+          set -euo pipefail
           pip install pyyaml -q
           python3 << 'PYEOF'
           import json, os, re, yaml
 
-          CATALOG_DIRS = ["database", "runtime", "webserver", "other"]
+          catalogDirs = ["database", "runtime", "webserver", "other"]
+          namePattern = r"^[a-zA-Z0-9_-]{1,64}$"
+          versionPattern = r"^[a-zA-Z0-9._-]{1,64}$"
+          manifestFileNames = ("manifest.json", "manifest.yml", "manifest.yaml")
 
-          def find_manifest(service_dir):
-              for filename in ("manifest.json", "manifest.yml", "manifest.yaml"):
-                  path = os.path.join(service_dir, filename)
-                  if os.path.isfile(path):
-                      return path
+          def findManifest(serviceDir):
+              for manifestFileName in manifestFileNames:
+                  manifestPath = os.path.join(serviceDir, manifestFileName)
+                  if os.path.isfile(manifestPath):
+                      return manifestPath
               return None
 
-          def parse_manifest(path):
-              with open(path) as f:
-                  if path.endswith(".json"):
-                      return json.load(f)
-                  return yaml.safe_load(f)
+          def parseManifest(manifestPath):
+              with open(manifestPath, encoding="utf-8") as manifestHandle:
+                  if manifestPath.endswith(".json"):
+                      return json.load(manifestHandle)
+                  return yaml.safe_load(manifestHandle)
 
-          repo_root = os.environ.get("GITHUB_WORKSPACE", ".")
-          all_items = []
-          test_items = []
-          seen_names = set()
+          def recordSkippedItem(allItems, itemName, itemType, itemNature, skipReason):
+              allItems.append({
+                  "name": itemName,
+                  "type": itemType,
+                  "nature": itemNature,
+                  "version": "",
+                  "portProtocol": "",
+                  "status": "skip",
+                  "error": skipReason,
+              })
 
-          for cat_dir in CATALOG_DIRS:
-              cat_path = os.path.join(repo_root, cat_dir)
-              if not os.path.isdir(cat_path):
+          repoRoot = os.environ.get("GITHUB_WORKSPACE", ".")
+          allItems = []
+          testItems = []
+          seenNames = set()
+
+          for catalogDir in catalogDirs:
+              catalogPath = os.path.join(repoRoot, catalogDir)
+              if not os.path.isdir(catalogPath):
                   continue
-              for entry in sorted(os.listdir(cat_path)):
-                  entry_path = os.path.join(cat_path, entry)
-                  if not os.path.isdir(entry_path):
+              for entryName in sorted(os.listdir(catalogPath)):
+                  entryPath = os.path.join(catalogPath, entryName)
+                  if not os.path.isdir(entryPath):
                       continue
 
-                  manifest_path = find_manifest(entry_path)
-                  if manifest_path is None:
-                      all_items.append({
-                          "name": entry, "type": cat_dir, "nature": "",
-                          "version": "", "portProtocol": "",
-                          "status": "skip", "error": "No manifest found"
-                      })
+                  manifestPath = findManifest(entryPath)
+                  if manifestPath is None:
+                      recordSkippedItem(
+                          allItems, entryName, catalogDir, "", "NoManifestFound",
+                      )
                       continue
 
                   try:
-                      manifest = parse_manifest(manifest_path)
-                  except Exception as parse_err:
-                      all_items.append({
-                          "name": entry, "type": cat_dir, "nature": "",
-                          "version": "", "portProtocol": "",
-                          "status": "skip",
-                          "error": f"Manifest parse error: {parse_err}"
-                      })
+                      manifest = parseManifest(manifestPath)
+                  except Exception as parseError:
+                      recordSkippedItem(
+                          allItems, entryName, catalogDir, "",
+                          f"ManifestParseError: {parseError}",
+                      )
                       continue
 
                   name = manifest.get("name", "")
-                  if not isinstance(name, str) or not re.match(r'^[a-zA-Z0-9_-]+$', name):
-                      all_items.append({
-                          "name": str(name) if name else entry,
-                          "type": cat_dir, "nature": "",
-                          "version": "", "portProtocol": "",
-                          "status": "skip", "error": "Invalid name"
-                      })
+                  if not isinstance(name, str):
+                      name = entryName
+                  if not re.match(namePattern, name):
+                      recordSkippedItem(
+                          allItems, name, catalogDir, "", "InvalidName",
+                      )
                       continue
 
                   versions = manifest.get("versions", [])
                   if not versions:
-                      all_items.append({
-                          "name": name, "type": cat_dir, "nature": "",
-                          "version": "", "portProtocol": "",
-                          "status": "skip", "error": "No versions"
-                      })
-                      continue
-
-                  port_bindings = manifest.get("portBindings", [])
-                  if not port_bindings:
-                      all_items.append({
-                          "name": name, "type": cat_dir, "nature": "",
-                          "version": "", "portProtocol": "",
-                          "status": "skip", "error": "No portBindings"
-                      })
-                      continue
-
-                  nature = manifest.get("nature", "")
-                  svc_type = manifest.get("type", cat_dir)
-                  port_protocol = str(port_bindings[0])
-
-                  install_steps = manifest.get("installCmdSteps", [])
-                  if isinstance(install_steps, list):
-                      has_install = any(
-                          isinstance(s, str) and s.strip()
-                          for s in install_steps
+                      recordSkippedItem(
+                          allItems, name, catalogDir, "", "NoVersions",
                       )
-                  else:
-                      has_install = bool(install_steps)
-
-                  if not has_install:
-                      all_items.append({
-                          "name": name, "type": svc_type,
-                          "nature": nature,
-                          "version": "", "portProtocol": "",
-                          "status": "skip",
-                          "error": "No installCmdSteps"
-                      })
                       continue
 
-                  if name in seen_names:
-                      all_items.append({
-                          "name": name, "type": svc_type,
-                          "nature": nature,
-                          "version": "", "portProtocol": "",
-                          "status": "skip",
-                          "error": "Duplicate name"
-                      })
+                  portBindings = manifest.get("portBindings", [])
+                  if not portBindings:
+                      recordSkippedItem(
+                          allItems, name, catalogDir, "", "NoPortBindings",
+                      )
                       continue
 
-                  seen_names.add(name)
+                  itemNature = manifest.get("nature", "")
+                  itemType = manifest.get("type", catalogDir)
+                  portProtocol = str(portBindings[0])
 
-                  for version_value in versions:
-                      version = str(version_value)
-                      item = {
+                  installSteps = manifest.get("installCmdSteps", "")
+                  hasInstallSteps = bool(installSteps)
+                  if isinstance(installSteps, list):
+                      hasInstallSteps = any(
+                          isinstance(installStep, str)
+                          and installStep.strip() != ""
+                          for installStep in installSteps
+                      )
+
+                  if not hasInstallSteps:
+                      recordSkippedItem(
+                          allItems, name, itemType, itemNature, "NoInstallCmdSteps",
+                      )
+                      continue
+
+                  if name in seenNames:
+                      recordSkippedItem(
+                          allItems, name, itemType, itemNature, "DuplicateName",
+                      )
+                      continue
+
+                  seenNames.add(name)
+
+                  for versionValue in versions:
+                      version = str(versionValue)
+                      if not re.match(versionPattern, version):
+                          recordSkippedItem(
+                              allItems, name, itemType, itemNature,
+                              f"InvalidVersion: {version}",
+                          )
+                          continue
+                      testItems.append({
                           "name": name,
                           "version": version,
-                          "portProtocol": port_protocol,
-                          "nature": nature,
-                          "type": svc_type,
-                      }
-                      test_items.append(item)
-                      all_items.append({
-                          "name": name, "type": svc_type,
-                          "nature": nature,
+                          "portProtocol": portProtocol,
+                          "nature": itemNature,
+                          "type": itemType,
+                      })
+                      allItems.append({
+                          "name": name,
+                          "type": itemType,
+                          "nature": itemNature,
                           "version": version,
-                          "portProtocol": port_protocol,
-                          "status": "test", "error": None
+                          "portProtocol": portProtocol,
+                          "status": "test",
+                          "error": None,
                       })
 
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write("matrix=" + json.dumps(test_items) + "\n")
-              f.write("all_items=" + json.dumps(all_items) + "\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as outputHandle:
+              outputHandle.write("MATRIX=" + json.dumps(testItems) + "\n")
+              outputHandle.write("ALL_ITEMS=" + json.dumps(allItems) + "\n")
 
-          summary = [f"Discovered {len(all_items)} services, {len(test_items)} testable"]
-          for item in all_items:
-              if item["status"] == "skip":
-                  summary.append(f"  SKIP {item['name']}: {item.get('error', '')}")
-          for item in test_items:
-              summary.append(
-                  f"  TEST {item['name']} v{item['version']} ({item['type']})"
+          summaryLines = [
+              f"Discovered {len(allItems)} services, {len(testItems)} testable"
+          ]
+          for catalogItem in allItems:
+              if catalogItem["status"] == "skip":
+                  summaryLines.append(
+                      f"  SKIP {catalogItem['name']}: {catalogItem.get('error', '')}"
+                  )
+          for testItem in testItems:
+              summaryLines.append(
+                  f"  TEST {testItem['name']} v{testItem['version']}"
+                  f" ({testItem['type']})"
               )
-          print("\n".join(summary))
+          print("\n".join(summaryLines))
           PYEOF
 
   test:
     needs: [discover]
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      OS_IMAGE_REPOSITORY: "goinfinite/os"
     strategy:
       matrix:
-        item: ${{ fromJson(needs.discover.outputs.matrix) }}
+        item: ${{ fromJson(needs.discover.outputs.MATRIX) }}
       fail-fast: false
       max-parallel: 4
     steps:
       - name: Get latest OS tag
         id: os-version
         run: |
-          latest_tag=$(curl -s "https://registry.hub.docker.com/v2/repositories/goinfinite/os/tags?page_size=5" | jq -r '.results | sort_by(.last_updated) | reverse[] | .name' | grep -v latest | head -1)
-          if [ -z "${latest_tag}" ]; then
-            echo "::error::No usable OS image tag found from Docker Hub"
+          set -euo pipefail
+          registryBaseUrl="https://registry.hub.docker.com/v2/repositories"
+          tagListUrl="${registryBaseUrl}/${OS_IMAGE_REPOSITORY}/tags?page_size=5"
+          jqTagProgram='.results
+            | map(select((.name | contains("latest")) | not))
+            | sort_by(.last_updated)
+            | reverse
+            | .[0].name
+            // empty'
+          latestTag=$(curl -s "${tagListUrl}" | jq -r "${jqTagProgram}")
+          if [ -z "${latestTag}" ]; then
+            echo "::error::NoUsableOsImageTagFound"
             exit 1
           fi
-          echo "OS image tag: ${latest_tag}"
-          echo "os_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
+          echo "OsImageTag: ${latestTag}"
+          echo "OS_TAG=${latestTag}" >> "${GITHUB_OUTPUT}"
       - name: Pull OS image
         env:
-          OS_TAG: ${{ steps.os-version.outputs.os_tag }}
-        run: docker pull docker.io/goinfinite/os:${OS_TAG}
+          OS_TAG: ${{ steps.os-version.outputs.OS_TAG }}
+        run: |
+          set -euo pipefail
+          docker pull "docker.io/${OS_IMAGE_REPOSITORY}:${OS_TAG}"
       - name: Start container
         id: start
         env:
           ITEM_NAME: ${{ matrix.item.name }}
-          OS_TAG: ${{ steps.os-version.outputs.os_tag }}
+          OS_TAG: ${{ steps.os-version.outputs.OS_TAG }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          container_name="${ITEM_NAME}-ci-${RUN_ID}"
-          echo "container_name=${container_name}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          containerName="${ITEM_NAME}-ci-${RUN_ID}"
+          echo "CONTAINER_NAME=${containerName}" >> "${GITHUB_OUTPUT}"
           docker run -d --rm \
-            --name "${container_name}" \
+            --name "${containerName}" \
             --cpus=2 \
             --memory=4G \
             --env "PRIMARY_VHOST=goinfinite.local" \
             --env "LOG_LEVEL=debug" \
-            docker.io/goinfinite/os:${OS_TAG}
+            "docker.io/${OS_IMAGE_REPOSITORY}:${OS_TAG}"
       - name: Wait for container readiness
         env:
-          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+          CONTAINER_NAME: ${{ steps.start.outputs.CONTAINER_NAME }}
         run: |
-          echo "Waiting for container ${CONTAINER_NAME}..."
-          for attempt in $(seq 1 12); do
+          set -euo pipefail
+          echo "WaitingForContainer: ${CONTAINER_NAME}"
+          for readinessAttempt in {1..12}; do
             if docker exec "${CONTAINER_NAME}" os version >/dev/null 2>&1; then
-              echo "Container ready (attempt ${attempt})"
+              echo "ContainerReady: attempt ${readinessAttempt}"
               exit 0
             fi
             sleep 5
           done
-          echo "::error::Container did not become ready within 60s"
+          echo "::error::ContainerNotReadyWithin60s"
           exit 1
       - name: Install service
         id: install
         env:
-          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+          CONTAINER_NAME: ${{ steps.start.outputs.CONTAINER_NAME }}
           ITEM_NAME: ${{ matrix.item.name }}
           ITEM_VERSION: ${{ matrix.item.version }}
           ITEM_PORT_PROTOCOL: ${{ matrix.item.portProtocol }}
         run: |
-          result_file="result-${ITEM_NAME}-${ITEM_VERSION}.json"
-          tmp_out=$(mktemp)
+          set -euo pipefail
+          resultFilePath="result-${ITEM_NAME}-${ITEM_VERSION}.json"
+          installOutputPath=$(mktemp)
+          containerLogPath=$(mktemp)
+          containerLogTailBytes=1048576
+          installTimeoutSecs=1500
           set +e
-          docker exec "${CONTAINER_NAME}" \
+          # Outer guard. The OS enforces the manifest installTimeoutSecs first.
+          timeout "${installTimeoutSecs}s" docker exec "${CONTAINER_NAME}" \
             os services create-installable \
             -n "${ITEM_NAME}" \
             -v "${ITEM_VERSION}" \
             -p "${ITEM_PORT_PROTOCOL}" \
-            > "${tmp_out}" 2>&1
-          exit_code=$?
+            > "${installOutputPath}" 2>&1
+          installExitCode=$?
           set -e
+          docker logs --timestamps "${CONTAINER_NAME}" \
+            > "${containerLogPath}" 2>&1 || true
+          tail -c "${containerLogTailBytes}" "${containerLogPath}" \
+            > "${containerLogPath}.tail"
           export CI_NAME="${ITEM_NAME}"
           export CI_VERSION="${ITEM_VERSION}"
           export CI_PORT="${ITEM_PORT_PROTOCOL}"
-          export CI_EXIT="${exit_code}"
-          export CI_OUT="${tmp_out}"
-          export CI_RESULT="${result_file}"
+          export CI_EXIT="${installExitCode}"
+          export CI_OUT="${installOutputPath}"
+          export CI_LOGS="${containerLogPath}.tail"
+          export CI_RESULT="${resultFilePath}"
           python3 << 'PYEOF'
           import json, os
-          with open(os.environ['CI_OUT']) as f:
-              output = f.read()
-          with open(os.environ['CI_RESULT'], 'w') as f:
-              json.dump({
-                  'name': os.environ['CI_NAME'],
-                  'version': os.environ['CI_VERSION'],
-                  'portProtocol': os.environ['CI_PORT'],
-                  'exitCode': int(os.environ['CI_EXIT']),
-                  'output': output
-              }, f)
+
+          with open(os.environ["CI_OUT"], encoding="utf-8") as outputHandle:
+              installOutput = outputHandle.read()
+          with open(os.environ["CI_LOGS"], encoding="utf-8") as logHandle:
+              containerLogs = logHandle.read()
+          resultPayload = {
+              "name": os.environ["CI_NAME"],
+              "version": os.environ["CI_VERSION"],
+              "portProtocol": os.environ["CI_PORT"],
+              "exitCode": int(os.environ["CI_EXIT"]),
+              "output": installOutput,
+              "containerLogs": containerLogs,
+          }
+          with open(os.environ["CI_RESULT"], "w", encoding="utf-8") as resultHandle:
+              json.dump(resultPayload, resultHandle)
           PYEOF
-          rm -f "${tmp_out}"
-          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
-          echo "Exit code: ${exit_code}"
+          rm -f "${installOutputPath}" "${containerLogPath}" \
+            "${containerLogPath}.tail"
+          echo "EXIT_CODE=${installExitCode}" >> "${GITHUB_OUTPUT}"
+          echo "InstallExitCode: ${installExitCode}"
       - name: Upload result artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -276,9 +317,10 @@ jobs:
       - name: Cleanup container
         if: always()
         env:
-          CONTAINER_NAME: ${{ steps.start.outputs.container_name }}
+          CONTAINER_NAME: ${{ steps.start.outputs.CONTAINER_NAME }}
         run: |
-          docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+          set -euo pipefail
+          docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
   report:
     needs: [discover, test]
@@ -294,100 +336,123 @@ jobs:
       - name: Generate job summary
         if: always()
         env:
-          ALL_ITEMS: ${{ needs.discover.outputs.all_items }}
+          ALL_ITEMS: ${{ needs.discover.outputs.ALL_ITEMS }}
         run: |
+          set -euo pipefail
           python3 << 'PYEOF'
           import json, os, glob
 
-          all_items_raw = os.environ.get("ALL_ITEMS", "[]")
-          all_items = json.loads(all_items_raw)
+          allItemsRaw = os.environ.get("ALL_ITEMS", "[]")
+          allItems = json.loads(allItemsRaw)
 
-          test_results = {}
-          for result_path in glob.glob("results/result-*.json"):
-              with open(result_path) as f:
-                  data = json.load(f)
-              test_results[(data["name"], data["version"])] = data
+          testResults = {}
+          for resultPath in glob.glob("results/result-*.json"):
+              with open(resultPath, encoding="utf-8") as resultHandle:
+                  resultData = json.load(resultHandle)
+              testResults[
+                  (resultData["name"], resultData["version"])
+              ] = resultData
 
-          lines = []
-          lines.append("# Services CI Results")
-          lines.append("")
-          lines.append(
+          summaryLines = []
+          summaryLines.append("# Services CI Results")
+          summaryLines.append("")
+          summaryLines.append(
               "| Service | Type | Nature | Version | Port | Status | Details |"
           )
-          lines.append("|---|---|---|---|---|---|---|")
+          summaryLines.append("|---|---|---|---|---|---|---|")
 
-          failures = 0
-          for item in all_items:
-              name = item["name"]
-              svc_type = item.get("type", "")
-              nature = item.get("nature", "")
-              status = item["status"]
-              version = item.get("version", "")
-              port = item.get("portProtocol", "")
+          def buildFailDetail(resultData, exitCode):
+              installOutput = resultData.get("output", "")
+              containerLogs = resultData.get("containerLogs", "")
+              daemonErrorLines = [
+                  line.strip()
+                  for line in containerLogs.splitlines()
+                  if '"level":"error"' in line
+              ]
+              daemonError = (
+                  daemonErrorLines[-1] if daemonErrorLines else ""
+              )
+              cliLastLine = (
+                  installOutput.strip().split("\n")[-1]
+                  if installOutput.strip()
+                  else ""
+              )
+              return (
+                  daemonError or cliLastLine or f"exit code {exitCode}"
+              )[:120]
 
-              result_key = (name, version)
-              if status == "test" and result_key in test_results:
-                  tr = test_results[result_key]
-                  exit_code = tr.get("exitCode", -1)
-                  version = tr.get("version", version)
-                  port = tr.get("portProtocol", port)
-                  if exit_code == 0:
-                      test_status = "PASS"
-                      detail = ""
-                  else:
-                      test_status = "FAIL"
-                      failures += 1
-                      output = tr.get("output", "")
-                      last_line = (
-                          output.strip().split("\n")[-1]
-                          if output.strip()
-                          else ""
-                      )
-                      detail = (last_line or f"exit code {exit_code}")[:120]
-              elif status == "test":
-                  test_status = "FAIL"
-                  failures += 1
-                  detail = "Result artifact not found"
-              else:
-                  test_status = "SKIP"
-                  detail = item.get("error", "")
+          def classifyTestResult(itemStatus, resultKey, catalogItem, testResults):
+              resultData = testResults.get(resultKey)
+              if itemStatus != "test":
+                  return "SKIP", catalogItem.get("error", ""), resultData
+              if resultData is None:
+                  return "FAIL", "ResultArtifactNotFound", resultData
+              exitCode = resultData.get("exitCode", -1)
+              if exitCode == 0:
+                  return "PASS", "", resultData
+              return "FAIL", buildFailDetail(resultData, exitCode), resultData
 
-              lines.append(
-                  f"| {name} | {svc_type} | {nature} | {version}"
-                  f" | {port} | {test_status} | {detail} |"
+          failedCount = 0
+          for catalogItem in allItems:
+              name = catalogItem["name"]
+              itemType = catalogItem.get("type", "")
+              itemNature = catalogItem.get("nature", "")
+              itemStatus = catalogItem["status"]
+              version = catalogItem.get("version", "")
+              portProtocol = catalogItem.get("portProtocol", "")
+
+              testStatus, statusDetail, resultData = classifyTestResult(
+                  itemStatus, (name, version), catalogItem, testResults,
+              )
+              if resultData is not None:
+                  version = resultData.get("version", version)
+                  portProtocol = resultData.get("portProtocol", portProtocol)
+              if testStatus == "FAIL":
+                  failedCount += 1
+
+              summaryLines.append(
+                  f"| {name} | {itemType} | {itemNature} | {version}"
+                  f" | {portProtocol} | {testStatus} | {statusDetail} |"
               )
 
-          if not all_items:
-              lines.append(
-                  "| _No services discovered_"
-                  " | - | - | - | - | - | - |"
+          if not allItems:
+              summaryLines.append(
+                  "| _NoServicesDiscovered_ | - | - | - | - | - | - |"
               )
 
-          summary_text = "\n".join(lines)
+          summaryText = "\n".join(summaryLines)
 
-          step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-          if step_summary_path:
-              with open(step_summary_path, "a") as f:
-                  f.write(summary_text + "\n")
+          stepSummaryPath = os.environ.get("GITHUB_STEP_SUMMARY")
+          if stepSummaryPath:
+              with open(stepSummaryPath, "a", encoding="utf-8") as summaryHandle:
+                  summaryHandle.write(summaryText + "\n")
 
-          print(summary_text)
+          print(summaryText)
           print()
 
-          passed = sum(
-              1 for i in all_items
-              if i["status"] == "test"
-              and test_results.get(
-                  (i["name"], i.get("version", "")), {}
-              ).get("exitCode") == 0
-          )
-          failed_count = failures
-          skipped = sum(1 for i in all_items if i["status"] == "skip")
-          print(f"Summary: {passed} passed, {failed_count} failed, {skipped} skipped")
+          passedCount = 0
+          skippedCount = 0
+          for catalogItem in allItems:
+              if catalogItem["status"] == "skip":
+                  skippedCount += 1
+                  continue
+              if catalogItem["status"] != "test":
+                  continue
+              resultData = testResults.get(
+                  (catalogItem["name"], catalogItem.get("version", "")), {}
+              )
+              if resultData.get("exitCode") == 0:
+                  passedCount += 1
 
-          if failures > 0:
-              print(f"::error::Services CI failed for {failures} service(s)")
+          print(
+              f"Summary: {passedCount} passed, {failedCount} failed,"
+              f" {skippedCount} skipped"
+          )
+
+          if failedCount > 0:
+              print(f"::error::ServicesCiFailed: {failedCount}")
               exit(1)
 
-          if not all_items:
-              print("No services were discovered. Check repository structure.")
+          if not allItems:
+              print("NoServicesDiscovered")
           PYEOF
