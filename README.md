@@ -48,6 +48,22 @@ These manifests have their own property structure, which is read by Infinite OS 
 | `estimatedSizeBytes` | string | no | _The estimated size of the service in bytes, providing clarity about the storage impact of the service._ |
 | `avatarUrl` | string | no | _The URL for the service’s image, used for illustration purposes._ |
 
+### PHP Module Catalog
+
+The `runtime/php-webserver/assets/modules.yaml` file lists the toggleable PHP
+modules for each PHP version. Infinite OS combines this list with the output of
+`php -m` so the dashboard also shows modules that are disabled or not installed.
+The same list controls which module update requests can install a package.
+
+The file uses this structure:
+
+```yaml
+modules:
+  "8.5":
+    - curl
+    - mysqli
+```
+
 ## System Placeholders
 System placeholders are predefined values used by the Infinite OS to replace placeholders in installation commands. These placeholders are denoted by `%` at the beginning and end, such as `%adminName%`.
 

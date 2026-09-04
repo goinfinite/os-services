@@ -3,6 +3,11 @@
 ## v2
 
 ```
+# 2026/09/04
+
+feat(php): register supported modules per legacy version
+docs: explain the service assets directory
+
 # 2026/08/24
 
 chore: raise php-webserver estimated size to 1 GiB
