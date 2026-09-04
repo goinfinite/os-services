@@ -5,6 +5,7 @@
 ```
 # 2026/09/04
 
+feat(php): map concrete php versions to install channel
 feat(php): register supported modules per legacy version
 docs: explain the service assets directory
 

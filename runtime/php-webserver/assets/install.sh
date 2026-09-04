@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# @description  Install the php-webserver runtime for a selected version.
+# @description  Install the php-webserver runtime. A PHP version (8.2 or 82)
+#               is mapped to the latest or legacy channel.
 # @usage        install.sh <version> <primary-hostname> <assets-dir-path>
 # @output       No standard output.
 # @requires     bash v4+, apt-get, awk, curl, gpg, sed, tr
-# @version      0.1.0
-# @updated      2026-08-27
+# @version      0.2.0
+# @updated      2026-09-04
 
 set -euo pipefail
 
@@ -99,20 +100,36 @@ installLegacyPhpRuntimes() {
     "$primaryHostname" "$assetsDirPath"
 }
 
+resolvePhpVersionChannel() {
+  test "$#" -eq 1 || { echo "VersionRequired" >&2; return 1; }
+  requestedVersion="$1"
+  case "$requestedVersion" in
+    latest|8.5|85|8.4|84|8.3|83|8.2|82|8.1|81)
+      printf 'latest'
+      ;;
+    legacy|8.0|80|7.4|74|5.6|56)
+      printf 'legacy'
+      ;;
+    *)
+      echo "UnknownPhpVersion: $requestedVersion" >&2
+      return 1
+      ;;
+  esac
+}
+
 #
 ## Runtime
 #
 
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
+
 export DEBIAN_FRONTEND=noninteractive
-selectedVersion="${1:?VersionRequired}"
+requestedVersion="${1:?VersionRequired}"
 primaryHostname="${2:?PrimaryHostnameRequired}"
 assetsDirPath="${3:?AssetsDirPathRequired}"
+selectedVersion="$(resolvePhpVersionChannel "$requestedVersion")" || exit 1
 
 case "$selectedVersion" in
   latest) installModernPhpRuntimes "$primaryHostname" "$assetsDirPath" ;;
   legacy) installLegacyPhpRuntimes "$primaryHostname" "$assetsDirPath" ;;
-  *)
-    echo "UnknownPhpWebServerVersion: $selectedVersion" >&2
-    exit 1
-    ;;
 esac
