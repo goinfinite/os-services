@@ -3,6 +3,9 @@
 ## Services v2
 
 ```log
+2.2.0 - 2026/09/12
+feat(php): use wildcard listener maps on primary webserver config
+
 2.1.0 - 2026/09/04
 feat(php): map concrete php versions to install channel
 feat(php): register supported modules per legacy version
