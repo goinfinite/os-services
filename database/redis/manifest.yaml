@@ -14,7 +14,8 @@ portBindings:
 startCmd: /usr/bin/redis-server /etc/redis/redis.conf
 installCmdSteps:
   - curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
-  - echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" >/etc/apt/sources.list.d/redis.list
+  - redisCodename=$(lsb_release -cs); if [ "$redisCodename" = "trixie" ]; then redisCodename=bookworm; fi; echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $redisCodename main" >/etc/apt/sources.list.d/redis.list
+  - apt-get update -qq
   - versionTag=%version%; if [ -n "${versionTag}" ]; then versionTag="=6:${versionTag}*" ; fi; install_packages redis-server${versionTag} redis-tools${versionTag}
   - sed -i "s|^daemonize yes|daemonize no|g" /etc/redis/redis.conf
   - sed -i "s|^logfile|#logfile|g" /etc/redis/redis.conf

@@ -4,6 +4,7 @@
 
 ```log
 2.2.0 - 2026/09/12
+fix(redis): support debian trixie via bookworm packages
 feat(php): use wildcard listener maps on primary webserver config
 
 2.1.0 - 2026/09/04
