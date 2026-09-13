@@ -4,6 +4,7 @@
 
 ```log
 2.2.0 - 2026/09/12
+fix(mongodb): support debian trixie via bookworm packages
 fix: refresh apt index after adding repository
 fix(redis): support debian trixie via bookworm packages
 feat(php): use wildcard listener maps on primary webserver config
