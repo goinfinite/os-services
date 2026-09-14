@@ -82,6 +82,7 @@ modules:
     - ldap
     - memcached
     - msgpack
+    - pear
     - pdo_mysql
     - pdo_sqlite
     - pgsql
@@ -104,6 +105,7 @@ modules:
     - mailparse
     - memcached
     - msgpack
+    - pear
     - pdo_mysql
     - pdo_sqlite
     - pgsql
@@ -126,6 +128,7 @@ modules:
     - mailparse
     - memcached
     - msgpack
+    - pear
     - pdo_mysql
     - pdo_sqlite
     - pgsql
@@ -148,6 +151,7 @@ modules:
     - mailparse
     - memcached
     - msgpack
+    - pear
     - pdo_mysql
     - pdo_sqlite
     - pgsql
@@ -169,6 +173,7 @@ modules:
     - mailparse
     - memcached
     - msgpack
+    - pear
     - pdo_mysql
     - pdo_sqlite
     - pgsql
