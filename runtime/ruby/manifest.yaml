@@ -27,6 +27,7 @@ portBindings:
 startupFile: /app/genericStartupFile.rb
 startCmd: mise x ruby@%version% -- ruby %startupFile%
 installCmdSteps:
+  - apt-get update -qq
   - install_packages -y build-essential libssl-dev libreadline-dev zlib1g-dev libffi-dev libyaml-dev
   - mise install ruby@%version%
   - mise x ruby@%version% -- gem install webrick

@@ -12,6 +12,7 @@ portBindings:
   - 8644/http
 startCmd: /root/.local/bin/hermes gateway run
 installCmdSteps:
+  - apt-get update -qq
   - install_packages -qqy ripgrep
   - curl -LsSf https://astral.sh/uv/install.sh | bash
   - ln -sf /root/.local/bin/uv /usr/local/bin/uv
