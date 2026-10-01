@@ -3,6 +3,9 @@
 ## Services v2
 
 ```log
+2.2.1 - 2026/09/30
+fix(openssh): exempt the container own address and loopback from per-source penalties (Issue #82)
+
 2.2.0 - 2026/09/12
 fix(mongodb): support debian trixie via bookworm packages
 fix: refresh apt index after adding repository

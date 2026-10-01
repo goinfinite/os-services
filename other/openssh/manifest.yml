@@ -17,5 +17,25 @@ installCmdSteps:
   - apt-get update -qq
   - mkdir -p /var/run/sshd
   - install_packages openssh-server
+  - |
+    set -e
+    defaultRouteIface="$(ip -4 route show default | awk '{for (pos = 1; pos <= NF; pos++) if ($pos == "dev") { print $(pos + 1); exit }}')"
+    if [[ -z "$defaultRouteIface" ]]; then
+      echo "openssh install: no default route; cannot discover the default-route interface to find the container own address to exempt" >&2
+      exit 1
+    fi
+    containerOwnIp="$(ip -4 -o addr show dev "$defaultRouteIface" scope global | awk '{ split($4, addrAndPrefix, "/"); print addrAndPrefix[1]; exit }')"
+    if [[ -z "$containerOwnIp" ]]; then
+      echo "openssh install: no global IPv4 address on interface ${defaultRouteIface}; cannot discover the container own address to exempt" >&2
+      exit 1
+    fi
+    if [[ ! "$containerOwnIp" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+      echo "openssh install: global address on interface ${defaultRouteIface} is not an IPv4 address (got '${containerOwnIp}'); a malformed capture is not a valid exempt value" >&2
+      exit 1
+    fi
+    cat > /etc/ssh/sshd_config.d/60-per-source-penalties.conf <<EOF
+    PerSourcePenaltyExemptList 127.0.0.0/8,${containerOwnIp}/32
+    EOF
+  - /usr/sbin/sshd -t
 estimatedSizeBytes: 1760000
 avatarUrl: https://goinfinite.github.io/os-services/other/openssh/assets/avatar.jpg
