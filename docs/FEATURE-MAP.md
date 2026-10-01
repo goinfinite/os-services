@@ -98,6 +98,8 @@ Core services Infinite OS manages internally; users cannot create, update, or re
 
 **Flow:**
 
-1. `system/cron/assets/`, `system/nginx/assets/`, `system/os-api/assets/` — icons only; **no manifests exist in this repo**, so the install/run path is entirely inside the external `goinfinite/os` codebase and cannot be traced from here (see `system/.context.md`)
+1. `system/cron/assets/`, `system/nginx/assets/`, `system/os-api/assets/` — icons only; no manifests exist in this repo (see `system/.context.md`)
+2. *(external)* `goinfinite/os src/infra/internalDatabase/model/installedService.go:50-93` — `InitialEntries()` seeds the three services with `type: system`, their start commands, and an `avatarUrl` that points back at the matching `system/<name>/assets/avatar.jpg` file in this repo
+3. *(external)* `goinfinite/os src/domain/valueObject/serviceType.go` — the `system` service type; `src/domain/useCase/createCustomService.go:100`, `updateService.go:30` and `deleteService.go:99` refuse user create, update and delete on it
 
 ---
