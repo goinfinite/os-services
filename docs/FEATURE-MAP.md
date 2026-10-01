@@ -44,15 +44,13 @@ User toggles PHP extensions per version in the Infinite OS dashboard; the availa
 
 ---
 
-## Hermes Agent install and version update
+## Hermes Agent install
 
-User installs hermes-agent from a release tag; later pins the running installation to a newer tag without reinstalling.
+User installs hermes-agent from a release tag.
 
 **Flow:**
 
 1. `other/hermes-agent/manifest.yml` — install: uv + node@22 via mise, shallow `git clone --branch %version%` into `/app/hermes-agent`, editable `uv pip install`, config seeded from repo examples, `startCmd` runs the gateway on port 8644
-2. `other/hermes-agent/update.sh` — update: validates the target tag exists on the remote (refuses `main`/`master`), clears stale git locks only when no git process runs, fetches + force-checks-out the tag, re-syncs submodules, reinstalls Python/npm deps into the existing venv, runs `hermes config check` and prints `hermes config migrate` if a migration is pending
-3. *(external)* operator restarts the service (`os services update --name hermes-agent --status restart`, printed by the script) to load new code
 
 ---
 
