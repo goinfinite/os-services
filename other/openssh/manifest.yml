@@ -33,8 +33,13 @@ installCmdSteps:
       echo "openssh install: global address on interface ${defaultRouteIface} is not an IPv4 address (got '${containerOwnIp}'); a malformed capture is not a valid exempt value" >&2
       exit 1
     fi
+    exemptSources="127.0.0.0/8,::1/128,${containerOwnIp}/32"
+    defaultRouteGateway="$(ip -4 route show default | awk '{for (pos = 1; pos <= NF; pos++) if ($pos == "via") { print $(pos + 1); exit }}')"
+    if [[ "$defaultRouteGateway" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+      exemptSources="${exemptSources},${defaultRouteGateway}/32"
+    fi
     cat > /etc/ssh/sshd_config.d/60-per-source-penalties.conf <<EOF
-    PerSourcePenaltyExemptList 127.0.0.0/8,${containerOwnIp}/32
+    PerSourcePenaltyExemptList ${exemptSources}
     EOF
   - /usr/sbin/sshd -t
 estimatedSizeBytes: 1760000
