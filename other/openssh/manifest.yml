@@ -38,9 +38,9 @@ installCmdSteps:
     if [[ "$defaultRouteGateway" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
       exemptSources="${exemptSources},${defaultRouteGateway}/32"
     fi
-    cat > /etc/ssh/sshd_config.d/60-per-source-penalties.conf <<EOF
-    PerSourcePenaltyExemptList ${exemptSources}
-    EOF
+    printf 'PerSourcePenaltyExemptList %s\n' "${exemptSources}" > /etc/ssh/sshd_config.d/60-per-source-penalties.conf
   - /usr/sbin/sshd -t
+uninstallFilePaths:
+  - /etc/ssh/sshd_config.d/60-per-source-penalties.conf
 estimatedSizeBytes: 1760000
 avatarUrl: https://goinfinite.github.io/os-services/other/openssh/assets/avatar.jpg
