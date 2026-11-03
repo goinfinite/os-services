@@ -3,6 +3,9 @@
 ## Services v2
 
 ```log
+2.2.2 - 2026/11/03
+fix(php): overwrite the webserver configs on reinstall
+
 2.2.1 - 2026/09/30
 fix(openssh): exempt the container own address, the default-route gateway when present and loopback from per-source penalties (Issue #82)
 
