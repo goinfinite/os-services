@@ -4,8 +4,8 @@
 # @usage        install.sh <version> <primary-hostname> <assets-dir-path>
 # @output       No standard output.
 # @requires     bash v4+, apt-get, awk, curl, gpg, sed, tr
-# @version      0.2.0
-# @updated      2026-09-04
+# @version      0.2.1
+# @updated      2026-11-03
 
 set -euo pipefail
 
@@ -55,11 +55,11 @@ installServiceConfigAssets() {
   primaryHostname="${3:?PrimaryHostnameRequired}"
   assetsDirPath="${4:?AssetsDirPathRequired}"
 
-  cp -u "$assetsDirPath/$httpdConfigAssetName" \
+  cp "$assetsDirPath/$httpdConfigAssetName" \
     /usr/local/lsws/conf/httpd_config.conf
   sed -i "s/goinfinite.local/$primaryHostname/g" \
     /usr/local/lsws/conf/httpd_config.conf
-  cp -u "$assetsDirPath/$primaryConfigAssetName" \
+  cp "$assetsDirPath/$primaryConfigAssetName" \
     /app/conf/php-webserver/template
   cp /app/conf/php-webserver/template /app/conf/php-webserver/primary.conf
   sed -i "s/goinfinite.local/$primaryHostname/g" \
